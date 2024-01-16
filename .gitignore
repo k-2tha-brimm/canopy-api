@@ -1,0 +1,7 @@
+# Enviornment and Config
+.env
+.venv
+
+# Directories
+data/
+__pycache__/
