@@ -11,7 +11,7 @@ from src.query import query_context
 app = FastAPI()
 
 origins = [
-    "https://file-upload-ui.netlify.app/",
+    "https://file-upload-ui.netlify.app",
     "http://localhost",
     "http://localhost:5173",
 ]
