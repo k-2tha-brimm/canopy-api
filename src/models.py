@@ -1,5 +1,5 @@
 from .database import Base
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Boolean, text
+from sqlalchemy import Column, Integer, String, TIMESTAMP, text
 
 
 class File(Base):
@@ -8,5 +8,5 @@ class File(Base):
     id = Column(Integer,primary_key=True,nullable=False)
     filename = Column(String,nullable=False)
     content = Column(String,nullable=False)
-    partition = Column(Boolean, server_default='TRUE')
+    partition = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
