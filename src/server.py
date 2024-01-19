@@ -92,7 +92,7 @@ def test_files(db: Session = Depends(get_db)):
 @app.post('/files', status_code=status.HTTP_201_CREATED, response_model=List[schemas.CreateFile])
 def test_file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
 
-    new_file = models.Post(**post_file.dict())
+    new_file = models.File(**post_file.dict())
     db.add(new_file)
     db.commit()
     db.refresh(new_file)
