@@ -1,12 +1,16 @@
 """The FastAPI server implementation."""
-from typing import Optional
+from typing import Optional, List
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
+from sqlalchemy.orm import Session
+from starlette import status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
 from src.knowledge import store_document
 from src.query import query_context
+from src import models, schemas
+from src.database import get_db
 
 app = FastAPI()
 
@@ -75,3 +79,22 @@ def get_context(
         query, partition_name, max_context_tokens=max_context_tokens
     )
     return {"context": context}
+
+
+@app.get('/files', response_model=List[schemas.CreateFile])
+def test_files(db: Session = Depends(get_db)):
+
+    file = db.query(models.File).all()
+
+    return file
+
+
+@app.post('/files', status_code=status.HTTP_201_CREATED, response_model=List[schemas.CreateFile])
+def test_file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
+
+    new_file = models.Post(**post_file.dict())
+    db.add(new_file)
+    db.commit()
+    db.refresh(new_file)
+
+    return [new_file]
