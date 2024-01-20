@@ -82,15 +82,15 @@ def get_context(
 
 
 @app.get('/files', response_model=List[schemas.CreateFile])
-def get_files(db: Session = Depends(get_db)):
+def test_files(db: Session = Depends(get_db)):
 
     files = db.query(models.File).all()
 
     return files
 
 
-@app.get('/{filename}', response_model=schemas.CreateFile, status_code=status.HTTP_200_OK)
-def get_one_file(filename:str, db:Session = Depends(get_db)):
+@app.get('/files/{filename}', response_model=schemas.CreateFile, status_code=status.HTTP_200_OK)
+def get_test_one_file(filename:str, db:Session = Depends(get_db)):
 
     file = db.query(models.File).filter(models.File.filename == filename).first()
 
@@ -100,7 +100,7 @@ def get_one_file(filename:str, db:Session = Depends(get_db)):
 
 
 @app.post('/files', status_code=status.HTTP_201_CREATED, response_model=List[schemas.CreateFile])
-def file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
+def test_file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
 
     new_file = models.File(**post_file.dict())
     db.add(new_file)
