@@ -82,15 +82,25 @@ def get_context(
 
 
 @app.get('/files', response_model=List[schemas.CreateFile])
-def test_files(db: Session = Depends(get_db)):
+def get_files(db: Session = Depends(get_db)):
 
-    file = db.query(models.File).all()
+    files = db.query(models.File).all()
 
+    return files
+
+
+@app.get('/{filename}', response_model=schemas.CreateFile, status_code=status.HTTP_200_OK)
+def get_one_file(filename:str, db:Session = Depends(get_db)):
+
+    file = db.query(models.File).filter(models.File.filename == filename).first()
+
+    if file is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"The filename: {filename} you requested for does not exist")
     return file
 
 
 @app.post('/files', status_code=status.HTTP_201_CREATED, response_model=List[schemas.CreateFile])
-def test_file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
+def file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
 
     new_file = models.File(**post_file.dict())
     db.add(new_file)
