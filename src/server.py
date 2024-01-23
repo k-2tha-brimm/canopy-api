@@ -1,5 +1,7 @@
 """The FastAPI server implementation."""
+import requests
 from typing import Optional, List
+from lxml import html
 
 from fastapi import FastAPI, HTTPException, Query, Depends
 from sqlalchemy.orm import Session
@@ -78,7 +80,24 @@ def get_context(
     context = query_context(
         query, partition_name, max_context_tokens=max_context_tokens
     )
-    return {"context": context}
+
+    response = requests.get(
+    'https://en.wikipedia.org/w/api.php',
+    params={
+        'action': 'parse',
+        'format': 'json',
+        'page': partition_name,
+        'prop': 'text',
+        'redirects':''
+    }).json()
+    raw_html = response['parse']['text']['*']
+    document = html.document_fromstring(raw_html)
+
+    text = ''
+    for p in document.xpath('//p'):
+        text += p.text_content() + '\n'
+
+    return {"context": context, "text": text}
 
 
 @app.get('/files', response_model=List[schemas.CreateFile])

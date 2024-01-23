@@ -8,7 +8,7 @@ WORKDIR /app
 COPY ./src/ /app/src/
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir canopy-sdk pydantic fastapi uvicorn openai sqlalchemy psycopg2
+RUN pip install --no-cache-dir canopy-sdk pydantic fastapi uvicorn openai sqlalchemy psycopg2 lxml
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
