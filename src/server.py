@@ -132,13 +132,16 @@ def get_wiki_info(
         wiki_payload = fetch_wiki_data(pageid=pageid)
         store_document(wiki_payload['content'], wiki_payload['partition_name'])
         print('document stored')
-        test_file_sent({
+        new_file = models.File({
             'filename': wiki_payload['partition_name'].split(':')[1],
             'partition': wiki_payload['partition_name'].split(':')[0],
             'content': wiki_payload['content']
         })
+        db.add(new_file)
+        db.commit()
+        db.refresh(new_file)
         print('document saved')
-        file = db.query(models.File).filter(models.File.filename == pageid).first()
+        file = new_file
         print(file)
     
     context = query_context(query=query, partition_name=file['partition'], max_context_tokens=max_context_tokens)
