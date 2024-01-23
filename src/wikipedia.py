@@ -23,5 +23,4 @@ def fetch_wiki_data(pageid: str) -> Dict:
     for p in document.xpath('//p'):
         text += p.text_content() + '\n'
 
-    print(text)
     return {"content": text, "partition_name": f'{title}:{pageid}'}

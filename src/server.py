@@ -131,17 +131,17 @@ async def get_wiki_info(
     if file is None:
         print('There is no file')
         wiki_payload = fetch_wiki_data(pageid=pageid)
-        print(wiki_payload)
-        await store_document(wiki_payload.content, wiki_payload.partition_name)
+        print(wiki_payload['partition_name'])
+        await store_document(wiki_payload['content'], wiki_payload['partition_name'])
         print('document stored')
         await test_file_sent({
-            'filename': wiki_payload.partition_name.split(':')[1],
-            'partition': wiki_payload.partition_name.split(':')[0],
-            'content': wiki_payload.content
+            'filename': wiki_payload['partition_name'].split(':')[1],
+            'partition': wiki_payload['partition_name'].split(':')[0],
+            'content': wiki_payload['content']
         })
         print('document saved')
         file = db.query(models.File).filter(models.File.filename == pageid).first()
         print(file)
     
-    context = query_context(query=query, partition_name=file.partition, max_context_tokens=max_context_tokens)
+    context = query_context(query=query, partition_name=file['partition'], max_context_tokens=max_context_tokens)
     return { "context": context }
