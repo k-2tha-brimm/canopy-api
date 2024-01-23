@@ -144,5 +144,5 @@ def get_wiki_info(
         file = new_file
         print(file)
     
-    context = query_context(query=query, partition_name=file['partition'], max_context_tokens=max_context_tokens)
+    context = query_context(query=query, partition_name=file.partition, max_context_tokens=max_context_tokens)
     return { "context": context }
