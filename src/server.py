@@ -132,11 +132,11 @@ def get_wiki_info(
         wiki_payload = fetch_wiki_data(pageid=pageid)
         store_document(wiki_payload['content'], wiki_payload['partition_name'])
         print('document stored')
-        new_file = models.File({
+        new_file = models.File(**{
             'filename': wiki_payload['partition_name'].split(':')[1],
             'partition': wiki_payload['partition_name'].split(':')[0],
             'content': wiki_payload['content']
-        })
+        }.dict())
         db.add(new_file)
         db.commit()
         db.refresh(new_file)
