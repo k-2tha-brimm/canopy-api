@@ -1,7 +1,5 @@
 """The FastAPI server implementation."""
-import requests
 from typing import Optional, List
-from lxml import html
 
 from fastapi import FastAPI, HTTPException, Query, Depends
 from sqlalchemy.orm import Session
@@ -11,6 +9,7 @@ from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
 from src.knowledge import store_document
 from src.query import query_context
+from src.wikipedia import fetch_wiki_data
 from src import models, schemas
 from src.database import get_db
 
@@ -81,28 +80,11 @@ def get_context(
         query, partition_name, max_context_tokens=max_context_tokens
     )
 
-    response = requests.get(
-    'https://en.wikipedia.org/w/api.php',
-    params={
-        'action': 'parse',
-        'format': 'json',
-        'page': partition_name,
-        'prop': 'text',
-        'redirects':''
-    }).json()
-    raw_html = response['parse']['text']['*']
-    document = html.document_fromstring(raw_html)
-
-    text = ''
-    for p in document.xpath('//p'):
-        text += p.text_content() + '\n'
-
-    return {"context": context, "text": text}
+    return {"context": context}
 
 
 @app.get('/files', response_model=List[schemas.CreateFile])
 def test_files(db: Session = Depends(get_db)):
-
     files = db.query(models.File).all()
 
     return files
@@ -110,7 +92,6 @@ def test_files(db: Session = Depends(get_db)):
 
 @app.get('/files/{filename}', response_model=schemas.CreateFile, status_code=status.HTTP_200_OK)
 def get_test_one_file(filename:str, db:Session = Depends(get_db)):
-
     file = db.query(models.File).filter(models.File.filename == filename).first()
 
     if file is None:
@@ -120,10 +101,47 @@ def get_test_one_file(filename:str, db:Session = Depends(get_db)):
 
 @app.post('/files', status_code=status.HTTP_201_CREATED, response_model=List[schemas.CreateFile])
 def test_file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
-
     new_file = models.File(**post_file.dict())
     db.add(new_file)
     db.commit()
     db.refresh(new_file)
 
     return [new_file]
+
+
+@app.get('/wiki')
+async def get_wiki_info(
+    query: Optional[str] = Query(None),
+    pageid: Optional[str] = Query(None),
+    max_context_tokens: Optional[int] = 512,
+    db:Session = Depends(get_db)
+):
+    # Check if partition_name is provided and exists
+    if pageid is None:
+        raise HTTPException(
+            status_code=400, detail="Query parameter `pageid` not provided"
+        )
+    if query is None:
+        raise HTTPException(
+            status_code=400, detail="Query parameter `query` not provided"
+        )
+    
+    file = db.query(models.File).filter(models.File.filename == pageid).first()
+
+    if file is None:
+        print('There is no file')
+        wiki_payload = fetch_wiki_data(pageid=pageid)
+        print(wiki_payload)
+        await store_document(wiki_payload.content, wiki_payload.partition_name)
+        print('document stored')
+        await test_file_sent({
+            'filename': wiki_payload.partition_name.split(':')[1],
+            'partition': wiki_payload.partition_name.split(':')[0],
+            'content': wiki_payload.content
+        })
+        print('document saved')
+        file = db.query(models.File).filter(models.File.filename == pageid).first()
+        print(file)
+    
+    context = query_context(query=query, partition_name=file.partition, max_context_tokens=max_context_tokens)
+    return { "context": context }
