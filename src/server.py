@@ -110,7 +110,7 @@ def test_file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
 
 
 @app.get('/wiki')
-async def get_wiki_info(
+def get_wiki_info(
     query: Optional[str] = Query(None),
     pageid: Optional[str] = Query(None),
     max_context_tokens: Optional[int] = 512,
@@ -129,12 +129,10 @@ async def get_wiki_info(
     file = db.query(models.File).filter(models.File.filename == pageid).first()
 
     if file is None:
-        print('There is no file')
         wiki_payload = fetch_wiki_data(pageid=pageid)
-        print(wiki_payload['partition_name'])
-        await store_document(wiki_payload['content'], wiki_payload['partition_name'])
+        store_document(wiki_payload['content'], wiki_payload['partition_name'])
         print('document stored')
-        await test_file_sent({
+        test_file_sent({
             'filename': wiki_payload['partition_name'].split(':')[1],
             'partition': wiki_payload['partition_name'].split(':')[0],
             'content': wiki_payload['content']
