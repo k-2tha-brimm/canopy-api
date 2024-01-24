@@ -109,6 +109,42 @@ def test_file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
     return [new_file]
 
 
+@app.get('/wiki-upload')
+def get_wiki_info(
+    pages: Optional[str] = Query(None),
+    db:Session = Depends(get_db)
+):
+    # Check if partition_name is provided and exists
+    if pages is None:
+        raise HTTPException(
+            status_code=400, detail="Query parameter `pages` not provided"
+        )
+    
+    pagelist = pages.split(',')
+    result = []
+    for page in pagelist:
+        title = page.split('/')[-1]
+        file = db.query(models.File).filter(models.File.partition == title).first()
+
+        if file is None:
+            wiki_payload = fetch_wiki_data(page=page)
+            store_document(wiki_payload['content'], wiki_payload['partition_name'])
+            new_file = models.File(**{
+                'filename': wiki_payload['partition_name'].split(':')[1],
+                'partition': wiki_payload['partition_name'].split(':')[0],
+                'content': wiki_payload['content']
+            })
+            db.add(new_file)
+            db.commit()
+            db.refresh(new_file)
+            result.append(title)
+    
+    return { "message": f"Files added for {', '.join(result)}" }
+
+
+"""
+I am keeping this commented out for now, this was the Query/Add tool
+
 @app.get('/wiki')
 def get_wiki_info(
     query: Optional[str] = Query(None),
@@ -143,3 +179,4 @@ def get_wiki_info(
     
     context = query_context(query=query, partition_name=file.partition, max_context_tokens=max_context_tokens)
     return { "context": context }
+"""
