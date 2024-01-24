@@ -5,3 +5,6 @@
 # Directories
 data/
 __pycache__/
+
+# Test Server
+src/testserver.py
