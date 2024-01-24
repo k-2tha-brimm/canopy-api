@@ -112,24 +112,24 @@ def test_file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
 @app.get('/wiki')
 def get_wiki_info(
     query: Optional[str] = Query(None),
-    title: Optional[str] = Query(None),
+    page: Optional[str] = Query(None),
     max_context_tokens: Optional[int] = 512,
     db:Session = Depends(get_db)
 ):
     # Check if partition_name is provided and exists
-    if title is None:
+    if page is None:
         raise HTTPException(
-            status_code=400, detail="Query parameter `title` not provided"
+            status_code=400, detail="Query parameter `page` not provided"
         )
     if query is None:
         raise HTTPException(
             status_code=400, detail="Query parameter `query` not provided"
         )
     
-    file = db.query(models.File).filter(models.File.partition == title).first()
+    file = db.query(models.File).filter(models.File.partition == page).first()
 
     if file is None:
-        wiki_payload = fetch_wiki_data(title=title)
+        wiki_payload = fetch_wiki_data(page=page)
         store_document(wiki_payload['content'], wiki_payload['partition_name'])
         new_file = models.File(**{
             'filename': wiki_payload['partition_name'].split(':')[1],

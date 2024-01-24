@@ -5,13 +5,13 @@ import requests
 from lxml import html
 from typing import Dict
 
-def fetch_wiki_data(title: str) -> Dict:    
+def fetch_wiki_data(page: str) -> Dict:    
     response = requests.get(
     'https://en.wikipedia.org/w/api.php',
     params={
         'action': 'parse',
         'format': 'json',
-        'page': title,
+        'page': page,
         'prop': 'text',
         'redirects':''
     }).json()
@@ -27,4 +27,4 @@ def fetch_wiki_data(title: str) -> Dict:
         result  = [word for word in querytext if word.lower() not in stopwords]
         text += ' '.join(result)
 
-    return {"content": text, "partition_name": f'{title}:{pageid}'}
+    return {"content": text, "partition_name": f'{page}:{pageid}'}
