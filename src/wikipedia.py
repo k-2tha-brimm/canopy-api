@@ -5,7 +5,7 @@ import requests
 from lxml import html
 from typing import Dict
 
-def fetch_wiki_data(page: str) -> Dict:    
+def fetch_wiki_data(page: str, should_filter: bool=True) -> Dict:    
     response = requests.get(
     'https://en.wikipedia.org/w/api.php',
     params={
@@ -21,10 +21,14 @@ def fetch_wiki_data(page: str) -> Dict:
 
     text = ''
     for p in document.xpath('//p'):
-        stopwords = ['is', 'a', 'at', 'is', 'the']
-        querytext = p.text_content().split()
+        line = p.text_content()
+        if should_filter:
+            stopwords = ['is', 'a', 'at', 'is', 'the']
+            querytext = line.split()
 
-        result  = [word for word in querytext if word.lower() not in stopwords]
-        text += ' '.join(result)
+            result  = [word for word in querytext if word.lower() not in stopwords]
+            text += ' '.join(result)
+        else:
+            text += line
 
     return {"content": text, "partition_name": f'{page}:{pageid}'}
