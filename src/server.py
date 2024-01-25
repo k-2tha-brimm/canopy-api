@@ -1,7 +1,7 @@
 """The FastAPI server implementation."""
 from typing import Optional, List
 
-from fastapi import FastAPI, HTTPException, Query, Depends
+from fastapi import FastAPI, HTTPException, Query, Depends, Body
 from sqlalchemy.orm import Session
 from starlette import status
 from fastapi.middleware.cors import CORSMiddleware
@@ -111,17 +111,18 @@ def test_file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
 
 @app.get('/wiki-upload')
 def get_wiki_info(
-    pages: Optional[str] = Query(None),
+    payload: dict = Body(...),
     db:Session = Depends(get_db)
 ):
     # Check if partition_name is provided and exists
-    if pages is None:
+    if not payload['pages'] or len(payload['pages']) == 0:
         raise HTTPException(
             status_code=400, detail="Query parameter `pages` not provided"
         )
     
-    pagelist = pages.split(',')
-    result = []
+    pagelist = payload['pages']
+    added_items = []
+    already_present = []
     for page in pagelist:
         title = page.split('/')[-1]
         file = db.query(models.File).filter(models.File.partition == title).first()
@@ -129,6 +130,7 @@ def get_wiki_info(
         if file is None:
             wiki_payload = fetch_wiki_data(page=page)
             store_document(wiki_payload['content'], wiki_payload['partition_name'])
+            print('Document stored')
             new_file = models.File(**{
                 'filename': wiki_payload['partition_name'].split(':')[1],
                 'partition': wiki_payload['partition_name'].split(':')[0],
@@ -136,10 +138,14 @@ def get_wiki_info(
             })
             db.add(new_file)
             db.commit()
+            print('File added')
             db.refresh(new_file)
-            result.append(title)
+            added_items.append(title)
+        else:
+            print('Page already added')
+            already_present.append(title)
     
-    return { "message": f"Files added for {', '.join(result)}" }
+    return { "added": added_items, "alreadyPresent": already_present }
 
 
 """
