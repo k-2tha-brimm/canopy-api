@@ -125,7 +125,9 @@ def get_wiki_info(
     already_present = []
     for page in pagelist:
         title = page.split('/')[-1]
+        print('Fetching file from DB...')
         file = db.query(models.File).filter(models.File.partition == title).first()
+        print('File query finished...')
 
         if file is None:
             print('Wiki document fetch beginning...')
