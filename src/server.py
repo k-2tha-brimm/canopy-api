@@ -1,4 +1,5 @@
 """The FastAPI server implementation."""
+import time
 from typing import Optional, List
 
 from fastapi import FastAPI, HTTPException, Query, Depends, Body
@@ -114,6 +115,7 @@ def get_wiki_info(
     payload: dict = Body(...),
     db:Session = Depends(get_db)
 ):
+    start_time = time.time()
     # Check if partition_name is provided and exists
     if not payload['pages'] or len(payload['pages']) == 0:
         raise HTTPException(
@@ -125,16 +127,22 @@ def get_wiki_info(
     already_present = []
     for page in pagelist:
         title = page.split('/')[-1]
-        print('Fetching file from DB...')
+        file_fetch_start_time = time.time()
+        print(f'Fetching file from DB at {file_fetch_start_time}...')
         file = db.query(models.File).filter(models.File.partition == title).first()
-        print('File query finished...')
+        print(f'File query finished with a total time of {time.time() - file_fetch_start_time}')
 
         if file is None:
-            print('Wiki document fetch beginning...')
+            wiki_fetch_start_time = time.time()
+            print(f'Wiki document fetch beginning at {wiki_fetch_start_time}')
             wiki_payload = fetch_wiki_data(page=title, should_filter=payload['shouldFilterStopWords'])
-            print('Wiki document fetch complete, beginning to store document...')
+            print(f'Wiki document fetch completewith a total time of {time.time() - wiki_fetch_start_time}')
+            store_document_start_time = time.time()
+            print(f'Beginning document storing at {store_document_start_time}')
             store_document(wiki_payload['content'], wiki_payload['partition_name'])
-            print('Document stored, creating new file...')
+            print(f'Document stored with a total time of {time.time() - store_document_start_time}')
+            new_file_store_start_time = time.time()
+            print(f'Beginning to store new file in DB at {new_file_store_start_time}')
             new_file = models.File(**{
                 'filename': wiki_payload['partition_name'].split(':')[1],
                 'partition': wiki_payload['partition_name'].split(':')[0],
@@ -142,12 +150,14 @@ def get_wiki_info(
             })
             db.add(new_file)
             db.commit()
-            print('File added...')
+            print(f'File added with a total time of {time.time() - new_file_store_start_time}')
             db.refresh(new_file)
             added_items.append(title)
         else:
             print('Page already added')
             already_present.append(title)
+
+    print(f'Total time to complete task: {time.time() - start_time}')
     
     return { "added": added_items, "alreadyPresent": already_present }
 
