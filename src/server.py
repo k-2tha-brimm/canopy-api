@@ -128,9 +128,11 @@ def get_wiki_info(
         file = db.query(models.File).filter(models.File.partition == title).first()
 
         if file is None:
+            print('Wiki document fetch beginning...')
             wiki_payload = fetch_wiki_data(page=title, should_filter=payload['shouldFilterStopWords'])
+            print('Wiki document fetch complete, beginning to store document...')
             store_document(wiki_payload['content'], wiki_payload['partition_name'])
-            print('Document stored')
+            print('Document stored, creating new file...')
             new_file = models.File(**{
                 'filename': wiki_payload['partition_name'].split(':')[1],
                 'partition': wiki_payload['partition_name'].split(':')[0],
@@ -138,7 +140,7 @@ def get_wiki_info(
             })
             db.add(new_file)
             db.commit()
-            print('File added')
+            print('File added...')
             db.refresh(new_file)
             added_items.append(title)
         else:
