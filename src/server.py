@@ -128,7 +128,7 @@ def get_wiki_info(
         file = db.query(models.File).filter(models.File.partition == title).first()
 
         if file is None:
-            wiki_payload = fetch_wiki_data(page=page)
+            wiki_payload = fetch_wiki_data(page=title)
             store_document(wiki_payload['content'], wiki_payload['partition_name'])
             print('Document stored')
             new_file = models.File(**{
