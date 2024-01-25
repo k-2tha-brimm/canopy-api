@@ -109,7 +109,7 @@ def test_file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
     return [new_file]
 
 
-@app.get('/wiki-upload')
+@app.post('/wiki-upload')
 def get_wiki_info(
     payload: dict = Body(...),
     db:Session = Depends(get_db)
