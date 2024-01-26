@@ -112,27 +112,13 @@ def test_file_sent(post_file:schemas.CreateFile, db:Session = Depends(get_db)):
 
 @app.post('/wiki-upload')
 def get_wiki_info(
-    payload: dict = Body(...),
+    payload: schemas.UploadItem,
     db:Session = Depends(get_db)
 ):
+    payload_dict = payload.dict()
     start_time = time.time()
-    should_filter = True
-    # Check if partition_name is provided and exists
-    if not payload['pages'] or len(payload['pages']) == 0:
-        raise HTTPException(
-            status_code=400, detail="Body missing parameter `pages`"
-        )
     
-    # Check if chunk_size is provided and exists
-    if not payload['chunkSize'] or len(payload['chunkSize']) == 0:
-        raise HTTPException(
-            status_code=400, detail="Body missing parameter `Chunk Size`"
-        )
-    
-    if payload['shouldFilterStopWords']:
-        should_filter = payload['shouldFilterStopWords']
-    
-    pagelist = payload['pages']
+    pagelist = payload_dict['pages']
     added_items = []
     already_present = []
     for page in pagelist:
@@ -145,11 +131,11 @@ def get_wiki_info(
         if file is None:
             wiki_fetch_start_time = time.time()
             print(f'Wiki document fetch beginning at {wiki_fetch_start_time}')
-            wiki_payload = fetch_wiki_data(page=title, should_filter=should_filter)
+            wiki_payload = fetch_wiki_data(page=title, should_filter=payload_dict['should_filter'])
             print(f'Wiki document fetch completewith a total time of {time.time() - wiki_fetch_start_time}')
             store_document_start_time = time.time()
             print(f'Beginning document storing at {store_document_start_time}')
-            store_document(wiki_payload['content'], wiki_payload['partition_name'], payload['chunkSize'])
+            store_document(wiki_payload['content'], wiki_payload['partition_name'], chunk_size=payload_dict['chunk_size'])
             print(f'Document stored with a total time of {time.time() - store_document_start_time}')
             new_file_store_start_time = time.time()
             print(f'Beginning to store new file in DB at {new_file_store_start_time}')
