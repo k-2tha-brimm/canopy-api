@@ -32,11 +32,11 @@ class TokenLengthChunker(Chunker):
     256 tokens, 128 tokens, etc.)
     """
 
-    def __init__(self):
+    def __init__(self, chunk_size: int = 0):
         self.tokenizer = Tokenizer()
 
         # The chunk sizes that we make chunks for
-        self.sizes = [64, 128, 256, 512]
+        self.sizes = [chunk_size] if chunk_size > 0 else [64, 128, 256, 512]
 
     def _make_chunks(
         self, document: Document, tokens: List[str], chunk_size: int
@@ -112,10 +112,10 @@ class TokenLengthChunker(Chunker):
 class ExpertKnowledgeBase(KnowledgeBase):
     """The Knowledge Base for the AIA Experts. Managed through Canopy."""
 
-    def __init__(self, index_name: str = INDEX_NAME, chunker: Chunker = None):
+    def __init__(self, chunk_size: int = 0, index_name: str = INDEX_NAME, chunker: Chunker = None):
         # Set the default Chunker if none is provided
         if not chunker:
-            chunker = TokenLengthChunker()
+            chunker = TokenLengthChunker(chunk_size=chunk_size)
 
         # Instantiate the KnowledgeBase class
         super().__init__(index_name=index_name, chunker=chunker)
@@ -144,7 +144,7 @@ class ExpertKnowledgeBase(KnowledgeBase):
         )
 
 
-def store_document(content: str, partition_name: str) -> Document:
+def store_document(content: str, partition_name: str, chunk_size: int) -> Document:
     """Create a chunked document and store the chunks under the
     given partition name.
 
@@ -157,7 +157,7 @@ def store_document(content: str, partition_name: str) -> Document:
     doc = PartitionedDocument(partition_name, content)
 
     # Create a knowledge base object
-    kb = ExpertKnowledgeBase()
+    kb = ExpertKnowledgeBase(chunk_size=chunk_size)
 
     # Upsert the document into the knowledge base
     kb.upsert([doc])
