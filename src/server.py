@@ -36,6 +36,7 @@ class DocumentPayload(BaseModel):
 
     content: str
     partition_name: str
+    chunk_size: int
 
 
 @app.put("/document")
@@ -43,7 +44,7 @@ def put_document(document: DocumentPayload):
     # Using partition_name as the key to store the content
     try:
         # Store the document in the knowledge base
-        doc = store_document(document.content, document.partition_name)
+        doc = store_document(document.content, document.partition_name, document.chunk_size)
 
         # Return the document ID to the caller
         return {"document_id": doc.id}
@@ -123,22 +124,15 @@ def get_wiki_info(
     already_present = []
     for page in pagelist:
         title = page.split('/')[-1]
-        file_fetch_start_time = time.time()
-        print(f'Fetching file from DB at {file_fetch_start_time}...')
+
         file = db.query(models.File).filter(models.File.partition == title).first()
-        print(f'File query finished with a total time of {time.time() - file_fetch_start_time}')
 
         if file is None:
-            wiki_fetch_start_time = time.time()
-            print(f'Wiki document fetch beginning at {wiki_fetch_start_time}')
             wiki_payload = fetch_wiki_data(page=title, should_filter=payload_dict['should_filter'])
-            print(f'Wiki document fetch completewith a total time of {time.time() - wiki_fetch_start_time}')
             store_document_start_time = time.time()
-            print(f'Beginning document storing at {store_document_start_time}')
+            print(f'Beginning document storing with {payload['chunk_size']} chunk size')
             store_document(wiki_payload['content'], wiki_payload['partition_name'], chunk_size=payload_dict['chunk_size'])
             print(f'Document stored with a total time of {time.time() - store_document_start_time}')
-            new_file_store_start_time = time.time()
-            print(f'Beginning to store new file in DB at {new_file_store_start_time}')
             new_file = models.File(**{
                 'filename': wiki_payload['partition_name'].split(':')[1],
                 'partition': wiki_payload['partition_name'].split(':')[0],
@@ -146,14 +140,13 @@ def get_wiki_info(
             })
             db.add(new_file)
             db.commit()
-            print(f'File added with a total time of {time.time() - new_file_store_start_time}')
             db.refresh(new_file)
             added_items.append(title)
         else:
             print('Page already added')
             already_present.append(title)
 
-    print(f'Total time to complete task: {time.time() - start_time}')
+    print(f'Total time to complete task with chunk size {payload["chunk_size"]}: {time.time() - start_time}')
     
     return { "added": added_items, "alreadyPresent": already_present }
 
