@@ -130,7 +130,7 @@ def get_wiki_info(
         if file is None:
             wiki_payload = fetch_wiki_data(page=title, should_filter=payload_dict['should_filter'])
             store_document_start_time = time.time()
-            print(f'Beginning document storing with {payload_dict['chunk_size']} chunk size')
+            print(f"Beginning document storing with {payload_dict['chunk_size']} chunk size")
             store_document(wiki_payload['content'], wiki_payload['partition_name'], chunk_size=payload_dict['chunk_size'])
             print(f'Document stored with a total time of {time.time() - store_document_start_time}')
             new_file = models.File(**{
