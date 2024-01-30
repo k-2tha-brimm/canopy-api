@@ -117,7 +117,6 @@ def get_wiki_info(
     db:Session = Depends(get_db)
 ):
     payload_dict = payload.dict()
-    start_time = time.time()
     
     pagelist = payload_dict['pages']
     added_items = []
@@ -145,8 +144,6 @@ def get_wiki_info(
         else:
             print('Page already added')
             already_present.append(title)
-
-    print(f'Total time to complete task with chunk size {payload["chunk_size"]}: {time.time() - start_time}')
     
     return { "added": added_items, "alreadyPresent": already_present }
 
