@@ -133,8 +133,8 @@ def get_wiki_info(
             store_document(wiki_payload['content'], wiki_payload['partition_name'], chunk_size=payload_dict['chunk_size'])
             print(f'Document stored with a total time of {time.time() - store_document_start_time}')
             new_file = models.File(**{
-                'filename': wiki_payload['partition_name'].split(':')[1],
-                'partition': wiki_payload['partition_name'].split(':')[0],
+                'filename': wiki_payload['partition_name'].split(':')[0],
+                'partition': wiki_payload['partition_name'].split(':')[1],
                 'content': wiki_payload['content']
             })
             db.add(new_file)

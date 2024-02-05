@@ -8,3 +8,4 @@ __pycache__/
 
 # Test Server
 src/testserver.py
+src/new_server.py
