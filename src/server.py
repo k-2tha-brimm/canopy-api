@@ -124,7 +124,7 @@ def get_wiki_info(
     for page in pagelist:
         title = page.split('/')[-1]
 
-        file = db.query(models.File).filter(models.File.partition == title).first()
+        file = db.query(models.File).filter(models.File.filename == title).first()
 
         if file is None:
             wiki_payload = fetch_wiki_data(page=title, should_filter=payload_dict['should_filter'])
