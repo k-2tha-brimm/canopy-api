@@ -94,7 +94,7 @@ def test_files(db: Session = Depends(get_db)):
 
 @app.get('/files/{filename}', response_model=schemas.CreateFile, status_code=status.HTTP_200_OK)
 def get_test_one_file(filename:str, db:Session = Depends(get_db)):
-    file = db.query(models.File).filter(models.File.filename == filename).first()
+    file = db.query(models.File).filter(models.File.partition == filename).first()
 
     if file is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"The filename: {filename} you requested for does not exist")
@@ -124,7 +124,7 @@ def get_wiki_info(
     for page in pagelist:
         title = page.split('/')[-1]
 
-        file = db.query(models.File).filter(models.File.filename == title).first()
+        file = db.query(models.File).filter(models.File.partition == title).first()
 
         if file is None:
             wiki_payload = fetch_wiki_data(page=title, should_filter=payload_dict['should_filter'])
@@ -133,8 +133,8 @@ def get_wiki_info(
             store_document(wiki_payload['content'], wiki_payload['partition_name'], chunk_size=payload_dict['chunk_size'])
             print(f'Document stored with a total time of {time.time() - store_document_start_time}')
             new_file = models.File(**{
-                'filename': wiki_payload['partition_name'].split(':')[0],
-                'partition': wiki_payload['partition_name'].split(':')[1],
+                'filename': wiki_payload['partition_name'].split(':')[1],
+                'partition': wiki_payload['partition_name'].split(':')[0],
                 'content': wiki_payload['content']
             })
             db.add(new_file)
